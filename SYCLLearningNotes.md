@@ -1,72 +1,3 @@
-编译和运行 SYCL 程序的三个主要步骤是：
-
-1. 初始化环境变量
-2. 编译 SYCL 源代码
-3. 运行应用程序
-
-对于此培训，我们编写了一个脚本 （q） 来帮助开发人员在 DevCloud 上开发项目。此脚本将脚本提交到 DevCloud 上的 GPU 节点执行，等待作业完成并打印输出/错误。我们将使用此命令在 DevCloud 上运行：`run.sh``./q run.sh`
-
-./q run.sh是一种运行脚本的方式，其中./q表示在当前目录下运行脚本。
-
-希望这可以帮助你。
-
-#### 在本地系统上编译和运行：
-
-如果您已在本地系统上安装了英特尔® oneAPI 基本工具包，则可以使用以下命令编译和运行 SYCL 程序：
-
-```
-source /opt/intel/inteloneapi/setvars.sh
-
-icpx -fsycl simple.cpp -o simple
-
-./simple
-```
-
-*注意：run.sh 脚本是上述三个步骤的组合。*
-
-constexpr：编译运行时常量
-
-sycl代码需要包含：
-
-```cpp
-#include <sycl/sycl.hpp>
-using namespace cl::sycl;
-```
-
-#### handler
-
-`handler`是SYCL中的一个类，它表示一个命令组合器，可以用于将多个操作组合成单个命令
-
-- `cgh.parallel_for()`：在GPU上并行执行操作。
-- `cgh.single_task()`：在GPU上执行单个任务。
-- `cgh.copy()`：将数据从一个访问器复制到另一个访问器。
-- `cgh.fill()`：将缓冲区中的所有元素设置为指定值。
-- `cgh.update_host()`：将缓冲区中的数据复制回主机
-
-每个函数具体用法需要进一步搜索，如
-
-```cpp
-h.parallel_for(range<1>(1024), [=](id<1> i)
-{
-    A[i]= B[i]+C[i];
-});
-意为:for(int i=0; i < 1024; i++) {a[i]=b[i]+c[i];};
-多个维度使用item类而非id
-h.parallel_for(range<1>(1024), [=](item<1> item)
-{
-    auto i = item.get_id();
-    auto R = item.get_range();
-    // CODE THAT RUNS ON DEVICE
-
-});
-```
-
-#### lambda表达式
-
-`[&]` 是引用捕获，表示lambda函数内部可以通过引用访问当前作用域中的所有外部变量。在lambda函数内对捕获的变量进行修改时，会影响到外部变量本身。
-
- `[=]` 是值捕获，外部变量的副本在lambda函数创建时就被固定下来，在lambda函数内对捕获的变量进行修改时，不会影响到外部变量本身
-
 #### 命令组  核函数
 
 ```cpp
@@ -108,6 +39,44 @@ gpuQueue.submit([&](handler &cgh)
   cgh.single_task(my_kernel{}); 
 }).wait();
 ```
+
+
+
+
+#### handler
+
+`handler`是SYCL中的一个类，它表示一个命令组合器，可以用于将多个操作组合成单个命令
+
+- `cgh.parallel_for()`：在GPU上并行执行操作。
+- `cgh.single_task()`：在GPU上执行单个任务。
+- `cgh.copy()`：将数据从一个访问器复制到另一个访问器。
+- `cgh.fill()`：将缓冲区中的所有元素设置为指定值。
+- `cgh.update_host()`：将缓冲区中的数据复制回主机
+
+每个函数具体用法需要，如
+
+```cpp
+h.parallel_for(range<1>(1024), [=](id<1> i)
+{
+    A[i]= B[i]+C[i];
+});
+意为:for(int i=0; i < 1024; i++) {a[i]=b[i]+c[i];};
+多个维度使用item类而非id
+h.parallel_for(range<1>(1024), [=](item<1> item)
+{
+    auto i = item.get_id();
+    auto R = item.get_range();
+    // CODE THAT RUNS ON DEVICE
+
+});
+```
+
+#### lambda表达式
+
+`[&]` 是引用捕获，表示lambda函数内部可以通过引用访问当前作用域中的所有外部变量。在lambda函数内对捕获的变量进行修改时，会影响到外部变量本身。
+
+ `[=]` 是值捕获，外部变量的副本在lambda函数创建时就被固定下来，在lambda函数内对捕获的变量进行修改时，不会影响到外部变量本身
+
 
 #### 流stream
 
@@ -248,6 +217,29 @@ int main() {
 }
 ```
 
+#### 在本地系统上编译和运行：
+
+如果您已在本地系统上安装了英特尔® oneAPI 基本工具包，则可以使用以下命令编译和运行 SYCL 程序：
+
+```
+source /opt/intel/inteloneapi/setvars.sh
+
+icpx -fsycl simple.cpp -o simple
+
+./simple
+```
+
+*注意：run.sh 脚本是上述三个步骤的组合。*
+
+constexpr：编译运行时常量
+
+sycl代码需要包含：
+
+```cpp
+#include <sycl/sycl.hpp>
+using namespace cl::sycl;
+```
+
 举例：一个简单向量加法
 
 ```python
@@ -280,3 +272,4 @@ void SYCL_code(int* a, int* b, int* c, int N)
   });
 }
 ```
+
